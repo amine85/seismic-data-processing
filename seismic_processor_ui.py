@@ -22,7 +22,7 @@ class SeismicProcessorUI(QtGui.QMainWindow):
         self.Views = []
         self.statusBar()
 
-        self.setGeometry(300, 300, 1050, 950)
+        self.setGeometry(300, 600, 1050, 850)
         self.setWindowTitle('Seismic Pro')    
         self.show()
 
@@ -35,10 +35,10 @@ class SeismicProcessorUI(QtGui.QMainWindow):
             return activeSubWindow.widget()
         return None      
 
-    def create_view(self,p_type = None, fname = None, t_num = 0):
+    def create_view(self,p_type = None, fname = None, t_num = 0, region = []):
 
         self.Views.append( View(plot_type = p_type,filename = fname, model = self.model,
-                                trace_num = t_num) )
+                                trace_num = t_num, region = region) )
         self.mdiArea.addSubWindow(self.Views[len(self.Views)-1])
         self.Views[len(self.Views)-1].show()
        
@@ -61,21 +61,21 @@ class SeismicProcessorUI(QtGui.QMainWindow):
         self.powerSpectrumAction.setDisabled(True)    
         
         # Processing Actions #
-        self.normalMoveOutAction = QtGui.QAction('NMO', self)
-        self.normalMoveOutAction.setStatusTip('Correct using NMO')
-        self.normalMoveOutAction.triggered.connect(self.runNmo)        
+        self.normalMoveOutAction = QtGui.QAction('Periodigram', self)
+        self.normalMoveOutAction.setStatusTip('Computes Periodigram')
+        self.normalMoveOutAction.triggered.connect(self.run_periodigram)        
         self.normalMoveOutAction.setDisabled(True)    
 
 
-        self.stackAction = QtGui.QAction('Stacking', self)
-        self.stackAction.setStatusTip('Perform stacking after NMO')
-        self.stackAction.triggered.connect(self.runStack)  
+        self.stackAction = QtGui.QAction('Sparse Deconvolution', self)
+        self.stackAction.setStatusTip('Uses Spicking Deconvolution')
+        self.stackAction.triggered.connect(self.run_deconvolution)  
         self.stackAction.setDisabled(True)    
       
 
         self.migrateAction = QtGui.QAction('Migration', self)
-        self.migrateAction.setStatusTip('Performs depth migration')
-        self.migrateAction.triggered.connect(self.runMigration)    
+        self.migrateAction.setStatusTip('Performs time migration')
+        self.migrateAction.triggered.connect(self.run_migration)    
         self.migrateAction.setDisabled(True)    
     
 
@@ -136,8 +136,7 @@ class SeismicProcessorUI(QtGui.QMainWindow):
         # make sure this is a segy file
         _,ext = os.path.splitext(filename)
         self.lastPath, fname = os.path.split(filename)
-        
-        if ext != '.segy':
+        if ext != '.segy' and ext != '.sgy':
            errDialog = QtGui.QErrorMessage(self) 
            errDialog.showMessage("File Format Error: File must be SEGY")
            return
@@ -154,7 +153,21 @@ class SeismicProcessorUI(QtGui.QMainWindow):
             self.create_view(p_type = 'TracePlot',t_num = t_num)
             
     def surface_view(self):
-        self.create_view(p_type = 'Surface')        
+        region, ok = QtGui.QInputDialog.getText(self, self.tr("Surface View"),
+                                                    self.tr("tr_i tr_e t_i t_e:"),QtGui.QLineEdit.Normal)
+        region = str(region)
+        region = region.split()
+        region = [int(x) for x in region]
+        if len(region)!=4:
+           errDialog = QtGui.QErrorMessage(self) 
+           errDialog.showMessage("You need to enter four elemets")
+           return   
+        if region[0]>region[1] or region[2]>region[3]:
+           errDialog = QtGui.QErrorMessage(self) 
+           errDialog.showMessage("Make sure you have entered the dimensions correctly")
+           return
+        if ok:
+            self.create_view(p_type = 'Surface',region = region)        
 
     def psd_view(self):
         t_num, ok = QtGui.QInputDialog.getInteger(self, self.tr("PSD View"),
@@ -175,17 +188,16 @@ class SeismicProcessorUI(QtGui.QMainWindow):
         print "running agc"        
         self.processor.automatic_gain_control()
         
-    def runNmo(self):
+    def run_periodigram(self):
         if not hasattr(self,'processor'):
             self.processor = Processor(self.model)
-        print "running nmo"        
         
-    def runStack(self):
+    def run_deconvolution(self):
         if not hasattr(self,'processor'):
             self.processor = Processor(self.model)
-        print "running stacking"                
+                       
   
-    def runMigration(self):
+    def run_migration(self):
         if not hasattr(self,'processor'):
             self.processor = Processor(self.model)
         print "running migration"                

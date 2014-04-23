@@ -14,17 +14,21 @@ class Model(QtCore.QObject):
     
     def readData(self):
         temp = readSEGY(self.fileName,headonly=True)
+        #print dir(temp)
+        #print dir(temp.traces[0])
+        #print temp.binary_file_header
+        
         self.ntraces = len(temp.traces)
         self.ntimes = len(temp.traces[0].data)
         
         # temporary for testing only
-        self.ntraces = 50
+        self.ntraces = 1000
         # Put the traces in a numpy array 
         self.data = np.empty([self.ntimes,self.ntraces])
         for i in range(0,self.ntraces):
             self.data[:,i] = temp.traces[i].data
         
-
+        del temp # just making sure
     def saveData(self, filename = None):
         stream = Stream()
         for i in range(0,self.ntraces):

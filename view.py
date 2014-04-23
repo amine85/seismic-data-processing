@@ -17,9 +17,10 @@ class View(QtGui.QWidget):
 
 
     def __init__(self, parent = None, width=5, height=4, dpi=80, filename = None, model = None,
-                        plot_type = 'Image', trace_num = None):
+                        plot_type = 'Image', trace_num = None, region = []):
         # plot paramters #                                        
         self.t_num = trace_num
+        self.region = region
 
         # connect model signal #
         self.model = model
@@ -80,10 +81,14 @@ class View(QtGui.QWidget):
     
     def view_surface(self):
         
-        x = np.arange(self.model.getNTraces())
-        y = np.arange(self.model.getTLength())       
+        #x = np.arange(self.model.getNTraces())
+        #y = np.arange(self.model.getTLength())       
+        y = np.arange(self.region[1]-self.region[0])
+        x = np.arange(self.region[3]-self.region[2])       
         x, y = np.meshgrid(x, y)
         z = self.model.get_agc_data()
+        z = z[self.region[0]:self.region[1], self.region[2]:self.region[3]]
+        print self.model.getTLength()
         self.axes.plot_surface(x,y,z, rstride=1, cstride=1, cmap=cm.coolwarm,
                                linewidth=0, antialiased=False)
 

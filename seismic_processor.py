@@ -1,17 +1,17 @@
-#!/usr/bin/python
+#!/home/amin/Enthought/Canopy_64bit/User/bin/python
 # -*- coding: utf-8 -*-
 
 """
 
 """
 import sys
-import SeismicProcessorUI       
+from seismic_processor_ui import SeismicProcessorUI       
 from PySide import QtGui
         
 def main():
     
     app = QtGui.QApplication(sys.argv)
-    ex = SeismicProcessorUI.SeismicProcessorUI()
+    ex = SeismicProcessorUI()
     sys.exit(app.exec_())
 
 
